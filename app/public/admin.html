@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang='ru'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Админ-панель | Газпромнефть</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f7f9;
+            margin: 0;
+            padding: 40px;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #0055a5;
+            padding-bottom: 10px;
+        }
+        .logo {
+            color: #0055a5;
+            font-weight: bold;
+            font-size: 24px;
+            text-transform: uppercase;
+        }
+        .back-link {
+            color: #0055a5;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #0055a5;
+            margin-top: 0;
+        }
+        .form-group {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #666;
+        }
+        input, textarea {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 14px;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        .btn {
+            background-color: #0055a5;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.3s;
+        }
+        .btn:hover {
+            background-color: #003d7a;
+        }
+        .btn-danger {
+            background-color: #c0392b;
+        }
+        .btn-danger:hover {
+            background-color: #a93226;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            background-color: #f8f9fa;
+            color: #0055a5;
+            font-weight: 600;
+        }
+        .author-cell {
+            font-weight: 600;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <div class='logo'>Газпромнефть | Admin</div>
+            <a href='/' class='back-link'>← На главную</a>
+        </div>
+
+        <div class='card'>
+            <h2>Добавить новую цитату</h2>
+            <form id='quote-form'>
+                <div class='form-group'>
+                    <label>Текст цитаты</label>
+                    <textarea id='quote-text' required placeholder='Введите текст...'></textarea>
+                </div>
+                <div class='form-group'>
+                    <label>Автор</label>
+                    <input type='text' id='quote-author' required placeholder='Например: Омар Хайям'>
+                </div>
+                <button type='submit' class='btn'>Сохранить цитату</button>
+            </form>
+        </div>
+
+        <div class='card'>
+            <h2>Список всех цитат</h2>
+            <table id='quotes-table'>
+                <thead>
+                    <tr>
+                        <th>Автор</th>
+                        <th>Текст</th>
+                        <th>Действие</th>
+                    </tr>
+                </thead>
+                <tbody id='quotes-body'>
+                    <!-- Сюда будут добавляться строки JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        async function loadQuotes() {
+            const tbody = document.getElementById('quotes-body');
+            tbody.innerHTML = '<tr style="text-align:center"><td colspan="3">Загрузка...</td></tr>';
+            
+            try {
+                const response = await fetch('/api/quotes');
+                const quotes = await response.json();
+                
+                tbody.innerHTML = '';
+                quotes.forEach(q => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class='author-cell'>${q.author}</td>
+                        <td>${q.text}</td>
+                        <td><button class='btn btn-danger' onclick='deleteQuote(${q.id})'>Удалить</button></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (error) {
+                tbody.innerHTML = '<tr style="text-align:center"><td colspan="3">Ошибка загрузки списка</td></tr>';
+            }
+        }
+
+        async function addQuote(e) {
+            e.preventDefault();
+            const text = document.getElementById('quote-text').value;
+            const author = document.getElementById('quote-author').value;
+
+            try {
+                const response = await fetch('/api/quote', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text, author })
+                });
+
+                if (response.ok) {
+                    document.getElementById('quote-form').reset();
+                    loadQuotes();
+                } else {
+                    alert('Ошибка при сохранении цитаты');
+                }
+            } catch (error) {
+                alert('Произошла ошибка при отправке');
+            }
+        }
+
+        async function deleteQuote(id) {
+            if (!confirm('Вы уверены, что хотите удалить эту цитату?')) return;
+
+            try {
+                const response = await fetch(`/api/quote/${id}`, { method: 'DELETE' });
+                if (response.ok) {
+                    loadQuotes();
+                } else {
+                    alert('Ошибка при удалении');
+                }
+            } catch (error) {
+                alert('Произошла ошибка');
+            }
+        }
+
+        document.getElementById('quote-form').addEventListener('submit', addQuote);
+        window.onload = loadQuotes;
+    </script>
+</body>
+</html>
