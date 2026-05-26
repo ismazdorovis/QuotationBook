@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang='ru'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Цитатник | Газпромнефть</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f7f9;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #333;
+        }
+        .card {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            text-align: center;
+            border-top: 6px solid #0055a5;
+        }
+        .logo {
+            color: #0055a5;
+            font-weight: bold;
+            font-size: 24px;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .quote-container {
+            margin-bottom: 30px;
+            min-height: 120px;
+        }
+        .quote-text {
+            font-size: 22px;
+            font-style: italic;
+            line-height: 1.4;
+            margin-bottom: 15px;
+        }
+        .quote-author {
+            font-size: 16px;
+            color: #666;
+            font-weight: 600;
+        }
+        .btn {
+            background-color: #0055a5;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-weight: 500;
+        }
+        .btn:hover {
+            background-color: #003d7a;
+        }
+        .btn:active {
+            transform: translateY(1px);
+        }
+    </style>
+</head>
+<body>
+    <div class='card'>
+        <div class='logo'>Газпромнефть</div>
+        <div class='quote-container'>
+            <div id='quote' class='quote-text'>Загрузка цитаты...</div>
+            <div id='author' class='quote-author'></div>
+        </div>
+        <button id='next-btn' class='btn'>Другая цитата</button>
+    </div>
+
+    <script>
+        async function fetchQuote() {
+            const quoteEl = document.getElementById('quote');
+            const authorEl = document.getElementById('author');
+            
+            try {
+                const response = await fetch('/api/quote');
+                const data = await response.json();
+                quoteEl.textContent = '«' + data.text + '»';
+                authorEl.textContent = '— ' + data.author;
+            } catch (error) {
+                quoteEl.textContent = 'Ошибка при загрузке цитаты';
+                authorEl.textContent = '';
+            }
+        }
+
+        document.getElementById('next-btn').addEventListener('click', fetchQuote);
+        window.onload = fetchQuote;
+    </script>
+</body>
+</html>
